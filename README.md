@@ -1,4 +1,4 @@
-# Go Concurrency Patterns: Timing out, moving on
+# Паттерны параллельного(concurrency) программирования в Go: таймаут и переходы
 23 Sep 2010
 
 Andrew Gerrand
@@ -14,31 +14,31 @@ Tags: concurrency, technical
 go version go1.8.3 linux/amd64
 ```
 
-
-
 ## Introduction
 
 Параллельное программирование имеет свои идиомы. Хорошим примером является время ожидания(timeout). Хотя каналы в Go не поддерживают их напрямую, но их легко реализовать. Скажем, мы хотим получить из канала `ch`, но хотим ждать не более одной секунды для получения значения. Мы начнем с создания канала и запуска горутины, который будет спать перед отправкой в канал:
 
 ```golang
-	    timeout := make(chan bool, 1)
+	    timeout := make(chan bool, 1) // Создание буферизованного канала с размером 1
 	    go func() {
-	        time.Sleep(1 * time.Second)
+	        time.Sleep(1 * time.Second) // Горутина спит перед отправкой
 	        timeout <- true
 	    }()
 ```
-We can then use a `select` statement to receive from either `ch` or `timeout`. If nothing arrives on `ch` after one second, the timeout case is selected and the attempt to read from ch is abandoned.
+
+Затем мы можем использовать оператор `select` для получения из каналов `ch` или `timeout`. Если ничего не приходит в канал `ch` через одну секунду, выбирается тайм-аут, и попытка чтения из канала ch прекращается.
+
 ```golang
 	    select {
 	    case <-ch:
-	        // a read from ch has occurred
+			// чтение из канала ch
 	    case <-timeout:
-	        // the read from ch has timed out
+			// чтение из канала ch не происходит, т.к. происходит таймаут
 	    }
 ```
-The `timeout` channel is buffered with space for 1 value, allowing the timeout goroutine to send to the channel and then exit. The goroutine doesn't know (or care) whether the value is received. This means the goroutine won't hang around forever if the `ch` receive happens before the timeout is reached. The `timeout` channel will eventually be deallocated by the garbage collector.
+Канал `timeout` буферизуется для хранение 1 значения, позволяя `timeout` горутине отправлять на канал и затем выходить. Горотина не знает (или не заботится) о том, получено ли значение. Это означает, что горутина не будет висеть всегда, если «ch» получит событие до истечения таймаута. Канал «тайм-аут» в конечном итоге будет освобожден сборщиком мусора.
 
-(In this example we used `time.Sleep` to demonstrate the mechanics of goroutines and channels. In real programs you should use ` [[http://golang.org/pkg/time/#After][time.After]]`, a function that returns a channel and sends on that channel after the specified duration.)
+(В данном примере мы использовали `time.Sleep` для демонстрации работы горутин и каналов. В реальных программах вы должны использовать (`time.After`)[http://golang.org/pkg/time/#After], функция, которая возвращает канал и отправляет по этому каналу после указанной продолжительности.)
 
 Let's look at another variation of this pattern. In this example we have a program that reads from multiple replicated databases simultaneously. The program needs only one of the answers, and it should accept the answer that arrives first.
 
