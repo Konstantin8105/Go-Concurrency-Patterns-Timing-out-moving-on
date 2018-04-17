@@ -57,8 +57,8 @@ go version go1.8.3 linux/amd64
 	    return <-ch
 	}
 ```
-In this example, the closure does a non-blocking send, which it achieves by using the send operation in `select` statement with a `default` case. If the send cannot go through immediately the default case will be selected. Making the send non-blocking guarantees that none of the goroutines launched in the loop will hang around. However, if the result arrives before the main function has made it to the receive, the send could fail since no one is ready.
+В этом примере закрытие делает неблокирующую отправку, которую она достигает, используя операцию отправки в операторе `select` со значением ` default`. Если отправка не может пройти сразу, будет выбран случай по умолчанию. Выполнение отправки без блокировки гарантирует, что ни один из запущенных в цикле горутин не будет висеть. Однако, если результат доходит до того, как основная функция добралась до приема, отправка может завершиться неудачей, так как никто не готов.
 
-This problem is a textbook example of what is known as a [[https://en.wikipedia.org/wiki/Race_condition][race condition]], but the fix is trivial. We just make sure to buffer the channel `ch` (by adding the buffer length as the second argument to [[http://golang.org/pkg/builtin/#make][make]]), guaranteeing that the first send has a place to put the value. This ensures the send will always succeed, and the first value to arrive will be retrieved regardless of the order of execution.
+Эта проблема представляет собой пример учебника того, что известно как [`race`](https://en.wikipedia.org/wiki/Race_condition), но исправить просто. Мы просто закачаем канал `ch` (добавив длину буфера в качестве второго аргумента в [make](http://golang.org/pkg/builtin/#make)), гарантируем, что первая отправка имеет место, чтобы положить значение. Это гарантирует, что отправка всегда будет успешной, и первое полученное значение будет получено независимо от порядка выполнения.
 
-These two examples demonstrate the simplicity with which Go can express complex interactions between goroutines.
+Эти два примера демонстрируют простоту, с которой Go может решить сложные взаимодействия между гортанами.
