@@ -38,11 +38,11 @@ go version go1.8.3 linux/amd64
 ```
 Канал `timeout` буферизуется для хранение 1 значения, позволяя `timeout` горутине отправлять на канал и затем выходить. Горотина не знает (или не заботится) о том, получено ли значение. Это означает, что горутина не будет висеть всегда, если «ch» получит событие до истечения таймаута. Канал «тайм-аут» в конечном итоге будет освобожден сборщиком мусора.
 
-(В данном примере мы использовали `time.Sleep` для демонстрации работы горутин и каналов. В реальных программах вы должны использовать [`time.After`](http://golang.org/pkg/time/#After), функция, которая возвращает канал и отправляет по этому каналу после указанной продолжительности.)
+(В данном примере мы использовали [`time.Sleep`](http://golang.org/pkg/time/#Sleep) для демонстрации работы горутин и каналов. В реальных программах вы должны использовать [`time.After`](http://golang.org/pkg/time/#After), функция, которая возвращает канал и отправляет по этому каналу после указанной продолжительности.)
 
-Let's look at another variation of this pattern. In this example we have a program that reads from multiple replicated databases simultaneously. The program needs only one of the answers, and it should accept the answer that arrives first.
+Давайте рассмотрим ещё один вариант данного шаблона. В этом примере у нас есть программа, которая одновременно считывает данные из нескольких реплицируемых баз данных. Программа нуждается только в одном из ответов, и она должна принять ответ, который приходит первым.
 
-The function `Query` takes a slice of database connections and a `query` string. It queries each of the databases in parallel and returns the first response it receives:
+Функция `Query` принимает срез(slice) соединений с базой данных и строку` query`. Он запрашивает каждую из баз данных параллельно и возвращает первый ответ, который он получает:
 ```golang
 	func Query(conns []Conn, query string) Result {
 	    ch := make(chan Result)
